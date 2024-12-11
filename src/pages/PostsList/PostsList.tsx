@@ -1,27 +1,23 @@
-import styles from './pages.module.css';
-
-import React, { useEffect, useState } from 'react';
-import {
-  Table,
-  Tooltip,
-  Input,
-  Button,
-  Modal,
-  Typography,
-  Flex,
-  Select,
-} from 'antd';
+import styles from '../pages.module.css';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
   fetchPosts,
   toggleSelectPost,
   deleteSelectedPosts,
-} from '../redux/slice';
+} from '../../redux/slice';
 import { ColumnsType } from 'antd/es/table';
 
+import { PostsTable } from '../../components/Table/PostsTable';
+import { PostsSelect } from '../../components/Select/PostsSelect';
+import { PostsInput } from '../../components/Input/Input';
+import { PostsButton } from '../../components/Button/Button';
+import { PostsModal } from '../../components/Modal/PostsModal';
+// import { Flex } from '../../components/Flex/Flex';
+
+import { Typography, Tooltip, Flex } from 'antd';
 const { Title } = Typography;
-const { Option } = Select;
 
 interface Post {
   userId: number;
@@ -30,7 +26,7 @@ interface Post {
   body: string;
 }
 
-const PostsPage: React.FC = () => {
+export const PostsList: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { posts, loading, selectedPosts } = useAppSelector(
@@ -46,9 +42,11 @@ const PostsPage: React.FC = () => {
     dispatch(fetchPosts());
   }, [dispatch]);
 
-  const filteredPosts = posts.filter((post: Post) =>
-    post.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPosts = useMemo(() => {
+    return posts.filter((post: Post) =>
+      post.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [posts, searchTerm]);
 
   const columns: ColumnsType<Post> = [
     {
@@ -107,57 +105,36 @@ const PostsPage: React.FC = () => {
   return (
     <div className={styles.container}>
       <Title>Посты</Title>
-      <Flex className={styles.menu}>
-        <Select
-          className={styles.postsCountList}
-          value={pageSize}
-          style={{ width: 120 }}
-          onChange={handlePageSizeChange}
-        >
-          <Option value={10}>10 постов на странице</Option>
-          <Option value={20}>20 постов на странице</Option>
-          <Option value={50}>50 постов на странице</Option>
-          <Option value={100}>100 постов на странице</Option>
-        </Select>
-        <Input
-          className={styles.input}
-          placeholder="Поиск по заголовкам"
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setSearchTerm(e.target.value)
-          }
-        />
-        <Button
-          type="primary"
-          danger
-          disabled={!selectedPosts.length}
-          onClick={() => setIsModalVisible(true)}
-          className={styles.btn}
-        >
-          Удалить выбранные посты
-        </Button>
-      </Flex>
+      <div className={styles.menu}>
+        <Flex>
+          <PostsSelect value={pageSize} onChange={handlePageSizeChange} />
+          <PostsInput
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <PostsButton
+            disabled={!selectedPosts.length}
+            onClick={() => setIsModalVisible(true)}
+          />
+        </Flex>
+      </div>
 
-      <Table
+      <PostsTable
         columns={columns}
         dataSource={paginatedPosts}
-        rowKey="id"
         loading={loading}
-        pagination={{
-          current: currentPage,
-          pageSize: pageSize,
-          total: filteredPosts.length,
-          onChange: handlePageChange,
-          showSizeChanger: false,
-        }}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        total={filteredPosts.length}
+        onPageChange={handlePageChange}
       />
-      <Modal
+
+      <PostsModal
         title="Точно удаляем выбранные посты?"
         onCancel={() => setIsModalVisible(false)}
-        open={isModalVisible}
+        visible={isModalVisible}
         onOk={handleDelete}
-      ></Modal>
+      />
     </div>
   );
 };
-
-export default PostsPage;

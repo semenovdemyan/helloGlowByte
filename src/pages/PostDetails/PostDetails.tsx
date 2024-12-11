@@ -1,4 +1,4 @@
-import styles from './pages.module.css';
+import styles from '../pages.module.css';
 
 import React, { useEffect, useState } from 'react';
 import { List } from 'antd';
@@ -17,7 +17,7 @@ interface Post {
   body: string;
 }
 
-const PostDetailsPage: React.FC = () => {
+export const PostDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [comments, setComments] = useState<Comment[]>([]);
   const [post, setPost] = useState<Post | null>(null);
@@ -79,5 +79,3 @@ const PostDetailsPage: React.FC = () => {
     </div>
   );
 };
-
-export default PostDetailsPage;
