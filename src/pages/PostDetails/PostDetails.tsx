@@ -1,6 +1,6 @@
 import styles from '../pages.module.css';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { List } from 'antd';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -45,6 +45,8 @@ export const PostDetails: React.FC = () => {
     fetchPostAndComments();
   }, [id]);
 
+  const memoizedComments = useMemo(() => comments, [comments]);
+
   return (
     <div className={styles.container}>
       <h1>Пост {id}</h1>
@@ -63,9 +65,9 @@ export const PostDetails: React.FC = () => {
       <List
         loading={loading}
         itemLayout="vertical"
-        dataSource={comments}
+        dataSource={memoizedComments}
         renderItem={(item) => (
-          <List.Item>
+          <List.Item key={item.id}>
             <div>
               <List.Item.Meta
                 description={`Автор: ${item.email}`}

@@ -6,30 +6,25 @@ import {
   fetchPosts,
   toggleSelectPost,
   deleteSelectedPosts,
-} from '../../redux/slice';
-import { ColumnsType } from 'antd/es/table';
+  toggleSortDirection,
+} from '../../redux/posts/postsSlice';
 
+import type { Post } from '../../redux/posts/postsSlice.types';
+
+import { ColumnsType } from 'antd/es/table';
 import { PostsTable } from '../../components/Table/PostsTable';
 import { PostsSelect } from '../../components/Select/PostsSelect';
 import { PostsInput } from '../../components/Input/Input';
 import { PostsButton } from '../../components/Button/Button';
 import { PostsModal } from '../../components/Modal/PostsModal';
-// import { Flex } from '../../components/Flex/Flex';
-
 import { Typography, Tooltip, Flex } from 'antd';
-const { Title } = Typography;
 
-interface Post {
-  userId: number;
-  id: number;
-  title: string;
-  body: string;
-}
+const { Title } = Typography;
 
 export const PostsList: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { posts, loading, selectedPosts } = useAppSelector(
+  const { posts, loading, selectedPosts, sortDirection } = useAppSelector(
     (state) => state.posts
   );
 
@@ -42,71 +37,103 @@ export const PostsList: React.FC = () => {
     dispatch(fetchPosts());
   }, [dispatch]);
 
+  // Фильтрация постов
   const filteredPosts = useMemo(() => {
-    return posts.filter((post: Post) =>
+    return posts.filter((post) =>
       post.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [posts, searchTerm]);
 
-  const columns: ColumnsType<Post> = [
-    {
-      title: 'ID пользователя',
-      dataIndex: 'userId',
-      sorter: (a: Post, b: Post) => a.userId - b.userId,
-    },
-    {
-      title: 'Заголовок',
-      dataIndex: 'title',
-      render: (text: string, record: Post) => (
-        <a onClick={() => navigate(`/post/${record.id}`)}>{text}</a>
-      ),
-    },
-    {
-      title: 'Контент',
-      render: (_: unknown, record: Post) => (
-        <Tooltip title={record.body}>
-          {record.body.length > 50
-            ? `${record.body.slice(0, 50)}...`
-            : record.body}
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'Выбрать',
-      render: (_: unknown, record: Post) => (
-        <input
-          type="checkbox"
-          checked={selectedPosts.includes(record.id)}
-          onChange={() => dispatch(toggleSelectPost(record.id))}
-        />
-      ),
-    },
-  ];
+  // Сортировка постов с копией массива, чтобы не мутировать исходный
+  const sortedPosts = useMemo(() => {
+    const postsCopy = [...filteredPosts]; // Создаем копию массива
+    return postsCopy.sort((a, b) => {
+      if (sortDirection === 'ascending') {
+        return a.userId - b.userId;
+      } else {
+        return b.userId - a.userId;
+      }
+    });
+  }, [filteredPosts, sortDirection]);
 
+  // Оптимизация колонок таблицы
+  const columns: ColumnsType<Post> = useMemo(
+    () => [
+      {
+        title: 'ID пользователя',
+        dataIndex: 'userId',
+        sorter: (a: Post, b: Post) => {
+          if (sortDirection === 'ascending') {
+            return a.userId - b.userId;
+          } else {
+            return b.userId - a.userId;
+          }
+        },
+        onHeaderCell: () => ({
+          onClick: () => dispatch(toggleSortDirection()),
+        }),
+      },
+      {
+        title: 'Заголовок',
+        dataIndex: 'title',
+        render: (text: string, record: Post) => (
+          <a onClick={() => navigate(`/post/${record.id}`)}>{text}</a>
+        ),
+      },
+      {
+        title: 'Контент',
+        render: (_: unknown, record: Post) => (
+          <Tooltip title={record.body}>
+            {record.body.length > 50
+              ? `${record.body.slice(0, 50)}...`
+              : record.body}
+          </Tooltip>
+        ),
+      },
+      {
+        title: 'Выбрать',
+        render: (_: unknown, record: Post) => (
+          <input
+            type="checkbox"
+            checked={selectedPosts.includes(record.id)}
+            onChange={() => dispatch(toggleSelectPost(record.id))}
+          />
+        ),
+      },
+    ],
+    [dispatch, selectedPosts, sortDirection, navigate]
+  );
+
+  // Обработчик удаления
   const handleDelete = () => {
     dispatch(deleteSelectedPosts());
     setIsModalVisible(false);
   };
 
+  // Обработчик изменения размера страницы
   const handlePageSizeChange = (value: number) => {
     setPageSize(value);
     setCurrentPage(1);
   };
 
+  // Обработчик изменения страницы
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const paginatedPosts = filteredPosts.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Пагинация
+  const paginatedPosts = useMemo(() => {
+    return sortedPosts.slice(
+      (currentPage - 1) * pageSize,
+      currentPage * pageSize
+    );
+  }, [sortedPosts, currentPage, pageSize]);
 
   return (
     <div className={styles.container}>
       <Title>Посты</Title>
-      <div className={styles.menu}>
-        <Flex>
+      <div className="menu">
+        <Flex gap={'15px'} style={{ marginBottom: '20px' }}>
           <PostsSelect value={pageSize} onChange={handlePageSizeChange} />
           <PostsInput
             value={searchTerm}

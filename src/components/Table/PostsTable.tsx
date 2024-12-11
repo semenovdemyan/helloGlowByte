@@ -1,9 +1,7 @@
-// src/components/Table.tsx
 import React from 'react';
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import { Post } from '../../types'; // Сюда можно вынести типы, если они общие для всего проекта
-
+import type { Post } from '../../redux/posts/postsSlice.types';
 interface TableProps {
   columns: ColumnsType<Post>;
   dataSource: Post[];
@@ -27,7 +25,7 @@ export const PostsTable: React.FC<TableProps> = ({
     <Table
       columns={columns}
       dataSource={dataSource}
-      // rowKey="id"
+      rowKey="id"
       loading={loading}
       pagination={{
         current: currentPage,

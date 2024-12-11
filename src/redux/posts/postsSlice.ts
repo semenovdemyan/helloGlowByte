@@ -1,23 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-
-export interface Post {
-  userId: number;
-  id: number;
-  title: string;
-  body: string;
-}
-
-export interface PostsState {
-  posts: Post[];
-  selectedPosts: number[];
-  loading: boolean;
-}
-
+import { PostsState } from './postsSlice.types';
 const initialState: PostsState = {
   posts: [],
   selectedPosts: [],
   loading: false,
+  sortDirection: 'ascending',
 };
 
 export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
@@ -47,6 +35,10 @@ const postsSlice = createSlice({
       );
       state.selectedPosts = [];
     },
+    toggleSortDirection: (state) => {
+      state.sortDirection =
+        state.sortDirection === 'ascending' ? 'descending' : 'ascending';
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -63,5 +55,6 @@ const postsSlice = createSlice({
   },
 });
 
-export const { toggleSelectPost, deleteSelectedPosts } = postsSlice.actions;
+export const { toggleSelectPost, deleteSelectedPosts, toggleSortDirection } =
+  postsSlice.actions;
 export default postsSlice.reducer;
