@@ -1,20 +1,19 @@
-import React from 'react';
+import { FC } from 'react';
 import { Modal as AntModal } from 'antd';
 
 interface ModalProps {
-  title: string;
-  visible: boolean;
+  open: boolean;
   onCancel: () => void;
   onOk: () => void;
 }
 
-export const PostsModal: React.FC<ModalProps> = ({
-  title,
-  visible,
-  onCancel,
-  onOk,
-}) => {
+export const PostsModal: FC<ModalProps> = ({ open, onCancel, onOk }) => {
   return (
-    <AntModal title={title} open={visible} onCancel={onCancel} onOk={onOk} />
+    <AntModal
+      title="Точно удаляем выбранные посты?"
+      open={open}
+      onCancel={onCancel}
+      onOk={onOk}
+    />
   );
 };

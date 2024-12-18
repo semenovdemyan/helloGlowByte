@@ -1,35 +1,31 @@
 import styles from '../pages.module.css';
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../hooks';
+import { useAppDispatch, useAppSelector } from '../../../hooks';
 import {
   fetchPosts,
   toggleSelectPost,
-  deleteSelectedPosts,
   toggleSortDirection,
-} from '../../redux/posts/postsSlice';
+} from '../../../redux/posts/postsSlice.ts';
 
-import type { Post } from '../../redux/posts/postsSlice.types';
+import type { Post } from '../../../redux/posts/postsSlice.types.ts';
 
 import { ColumnsType } from 'antd/es/table';
-import { PostsTable } from '../../components/Table/PostsTable';
-import { PostsSelect } from '../../components/Select/PostsSelect';
-import { PostsInput } from '../../components/Input/Input';
-import { PostsButton } from '../../components/Button/Button';
-import { PostsModal } from '../../components/Modal/PostsModal';
+import { PostsTable } from '../../../components/Table/PostsTable.tsx';
+import { PostsSelect } from '../../../components/Select/PostsSelect.tsx';
+import { PostsInput } from '../../../components/Input/Input.tsx';
+import { PostsButton } from '../../../components/Button/Button.tsx';
 import { Typography, Tooltip, Flex } from 'antd';
+import { postsSelector, postReducer } from './selectors';
 
 const { Title } = Typography;
 
-export const PostsList: React.FC = () => {
+export const PostsList: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { posts, loading, selectedPosts, sortDirection } = useAppSelector(
-    (state) => state.posts
-  );
-
+  const { loading, selectedPosts, sortDirection } = useAppSelector(postReducer);
+  const posts = useAppSelector(postsSelector);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [pageSize, setPageSize] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
@@ -37,26 +33,6 @@ export const PostsList: React.FC = () => {
     dispatch(fetchPosts());
   }, [dispatch]);
 
-  // Фильтрация постов
-  const filteredPosts = useMemo(() => {
-    return posts.filter((post) =>
-      post.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [posts, searchTerm]);
-
-  // Сортировка постов с копией массива, чтобы не мутировать исходный
-  const sortedPosts = useMemo(() => {
-    const postsCopy = [...filteredPosts]; // Создаем копию массива
-    return postsCopy.sort((a, b) => {
-      if (sortDirection === 'ascending') {
-        return a.userId - b.userId;
-      } else {
-        return b.userId - a.userId;
-      }
-    });
-  }, [filteredPosts, sortDirection]);
-
-  // Оптимизация колонок таблицы
   const columns: ColumnsType<Post> = useMemo(
     () => [
       {
@@ -104,30 +80,26 @@ export const PostsList: React.FC = () => {
     [dispatch, selectedPosts, sortDirection, navigate]
   );
 
-  // Обработчик удаления
-  const handleDelete = () => {
-    dispatch(deleteSelectedPosts());
-    setIsModalVisible(false);
-  };
-
-  // Обработчик изменения размера страницы
   const handlePageSizeChange = (value: number) => {
     setPageSize(value);
     setCurrentPage(1);
   };
 
-  // Обработчик изменения страницы
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Пагинация
   const paginatedPosts = useMemo(() => {
-    return sortedPosts.slice(
-      (currentPage - 1) * pageSize,
-      currentPage * pageSize
+    console.log('paginatedPosts');
+    return posts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [currentPage, pageSize, posts]);
+
+  const filteredPosts = useMemo(() => {
+    console.log('filteredPosts');
+    return paginatedPosts.filter((post: { title: string }) =>
+      post.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [sortedPosts, currentPage, pageSize]);
+  }, [paginatedPosts, searchTerm]);
 
   return (
     <div className={styles.container}>
@@ -139,28 +111,18 @@ export const PostsList: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <PostsButton
-            disabled={!selectedPosts.length}
-            onClick={() => setIsModalVisible(true)}
-          />
+          <PostsButton disabled={!selectedPosts.length} />
         </Flex>
       </div>
 
       <PostsTable
         columns={columns}
-        dataSource={paginatedPosts}
+        dataSource={filteredPosts}
         loading={loading}
         currentPage={currentPage}
         pageSize={pageSize}
-        total={filteredPosts.length}
+        total={posts.length}
         onPageChange={handlePageChange}
-      />
-
-      <PostsModal
-        title="Точно удаляем выбранные посты?"
-        onCancel={() => setIsModalVisible(false)}
-        visible={isModalVisible}
-        onOk={handleDelete}
       />
     </div>
   );

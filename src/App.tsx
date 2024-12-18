@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { PostsList } from './pages';
-import { PostDetails } from './pages';
+import { PostsList } from './posts/pages';
+import { PostDetails } from './posts/pages';
 
 export const App: React.FC = () => {
   return (
