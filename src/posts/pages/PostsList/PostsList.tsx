@@ -33,7 +33,6 @@ export const PostsList: FC = () => {
     dispatch(fetchPosts());
   }, [dispatch]);
 
-  // Оптимизация колонок таблицы
   const columns: ColumnsType<Post> = useMemo(
     () => [
       {
@@ -81,39 +80,30 @@ export const PostsList: FC = () => {
     [dispatch, selectedPosts, sortDirection, navigate]
   );
 
-  // Обработчик изменения размера страницы
   const handlePageSizeChange = (value: number) => {
     setPageSize(value);
     setCurrentPage(1);
   };
 
-  // Обработчик изменения страницы
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Пагинация
   const paginatedPosts = useMemo(() => {
-    console.log('paginatedPosts',)
-    return posts.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize
-    );
+    console.log('paginatedPosts');
+    return posts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   }, [currentPage, pageSize, posts]);
 
-  // Фильтрация постов
   const filteredPosts = useMemo(() => {
-    console.log('filteredPosts',)
-    return paginatedPosts.filter((post) =>
-        post.title.toLowerCase().includes(searchTerm.toLowerCase())
+    console.log('filteredPosts');
+    return paginatedPosts.filter((post: { title: string }) =>
+      post.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [paginatedPosts, searchTerm]);
-
 
   return (
     <div className={styles.container}>
       <Title>Посты</Title>
-
       <div className="menu">
         <Flex gap={'15px'} style={{ marginBottom: '20px' }}>
           <PostsSelect value={pageSize} onChange={handlePageSizeChange} />
@@ -121,9 +111,7 @@ export const PostsList: FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <PostsButton
-            disabled={!selectedPosts.length}
-          />
+          <PostsButton disabled={!selectedPosts.length} />
         </Flex>
       </div>
 

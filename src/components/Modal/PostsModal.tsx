@@ -1,5 +1,5 @@
-import { FC } from "react";
-import { Modal as AntModal } from "antd";
+import { FC } from 'react';
+import { Modal as AntModal } from 'antd';
 
 interface ModalProps {
   open: boolean;
